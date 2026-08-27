@@ -4,25 +4,30 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Enable CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
 
+// Root test route
+app.get('/', (req, res) => {
+  res.json({ message: 'TeacherConnect Backend API is running' });
+});
+
 // Test route
 app.get('/api/test', (req, res) => {
-  res.json({ message: 'Backend Connected: Flutter backend connected successfully!' });
+  res.json({ message: 'Backend Connected: Flutter & Express communication working' });
 });
 
 // Health check route
-app.get('/api/healthz', (_req, res) => {
+app.get('/api/healthz', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Handle unknown routes
-app.use((_req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
+// Export app for Vercel serverless deployment
+module.exports = app;
 
-// Start the server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Express server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
