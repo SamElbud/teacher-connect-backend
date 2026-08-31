@@ -10,7 +10,7 @@ const generateToken = async (req, res, next) => {
   const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
   try {
     const response = await axios.get(
-      'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials', // Changed to api.safaricom.co.ke
+      'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials', // Changed to api.safaricom.co.ke
       {
         headers: {
           authorization: `Basic ${auth}`,
