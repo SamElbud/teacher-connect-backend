@@ -27,8 +27,8 @@ const generateToken = async (req, res, next) => {
 
 // STK Push Route
 app.post('/api/stkpush', generateToken, async (req, res) => {
-  let { phone, amount } = req.body;
-  phone = phone || DEFAULT_PHONE_NUMBER;
+  let { phoneNumber, amount } = req.body;
+  phone = phoneNumber || DEFAULT_PHONE_NUMBER;
 
   if (!amount) {
     return res.status(400).json({ error: 'Amount is required' });
