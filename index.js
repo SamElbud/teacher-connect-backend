@@ -1,11 +1,11 @@
-// Step 1: Safaricom Production Credentials
+Step 1: Safaricom Production Credentials
 const CONSUMER_KEY = process.env.MPESA_CONSUMER_KEY || 'YOUR_LIVE_CONSUMER_KEY';
 const CONSUMER_SECRET = process.env.MPESA_CONSUMER_SECRET || 'YOUR_LIVE_CONSUMER_SECRET';
 const BUSINESS_SHORT_CODE = process.env.MPESA_SHORTCODE || 'YOUR_LIVE_PAYBILL_OR_TILL'; 
 const PASSKEY = process.env.MPESA_PASSKEY || 'YOUR_LIVE_PASSKEY';
 const DEFAULT_PHONE_NUMBER = '254712489816';
 
-// Middleware to generate Daraja Access Token
+ Middleware to generate Daraja Access Token
 const generateToken = async (req, res, next) => {
   const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
   try {
@@ -25,7 +25,7 @@ const generateToken = async (req, res, next) => {
   }
 };
 
-// STK Push Route
+STK Push Route
 app.post('/api/stkpush', generateToken, async (req, res) => {
   let { phoneNumber, amount } = req.body;
   phone = phoneNumber || DEFAULT_PHONE_NUMBER;
