@@ -6,19 +6,24 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Safaricom Credentials (Set these in Vercel Environment Variables)
-const CONSUMER_KEY = process.env.MPESA_CONSUMER_KEY;
-const CONSUMER_SECRET = process.env.MPESA_CONSUMER_SECRET;
+// Safaricom Credentials
+const CONSUMER_KEY = process.env.MPESA_CONSUMER_KEY || 'YOUR_SANDBOX_CONSUMER_KEY';
+const CONSUMER_SECRET = process.env.MPESA_CONSUMER_SECRET || 'YOUR_SANDBOX_CONSUMER_SECRET';
 const BUSINESS_SHORT_CODE = process.env.MPESA_SHORTCODE || '174379';
-const PASSKEY = process.env.MPESA_PASSKEY;
+const PASSKEY = process.env.MPESA_PASSKEY || 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
 const CALLBACK_URL = 'https://teacher-connect-backend.vercel.app/api/callback';
 
-// Middleware to generate M-Pesa OAuth Token
+// Set base URL (Use sandbox for testing, api.safaricom.co.ke for production)
+const MPESA_BASE_URL = process.env.NODE_ENV === 'production' && process.env.USE_LIVE_MPESA === 'true'
+  ? 'https://api.safaricom.co.ke'
+  : 'https://sandbox.safaricom.co.ke';
+
+// Middleware to generate OAuth Token
 const generateToken = async (req, res, next) => {
   try {
     const authHeader = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
     const response = await axios.get(
-      'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
+      `${MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`,
       {
         headers: {
           Authorization: `Basic ${authHeader}`,
@@ -28,23 +33,33 @@ const generateToken = async (req, res, next) => {
     req.token = response.data.access_token;
     next();
   } catch (error) {
-    console.error('Error fetching M-Pesa token:', error.response?.data || error.message);
+    console.error('M-Pesa Auth Error:', error.response?.data || error.message);
     return res.status(500).json({
       success: false,
-      message: 'Failed to authenticate with M-Pesa. Check Consumer Key/Secret.',
+      message: 'Failed to authenticate with M-Pesa.',
       error: error.response?.data || error.message,
     });
   }
 };
 
-// Root Health Check
+// Health Check
 app.get('/', (req, res) => {
   res.status(200).json({ message: 'TeacherConnect Backend is Live!' });
 });
 
 // STK Push Route
 app.post('/api/stkpush', generateToken, async (req, res) => {
-  const { phoneNumber, amount } = req.body;
+  let { phoneNumber, amount } = req.body;
+
+  if (!phoneNumber || !amount) {
+    return res.status(400).json({ error: 'Phone number and amount are required' });
+  }
+
+  // Format Phone Number to 254XXXXXXXXX
+  phoneNumber = phoneNumber.replace(/\D/g, '');
+  if (phoneNumber.startsWith('0')) {
+    phoneNumber = `254${phoneNumber.substring(1)}`;
+  }
 
   const date = new Date();
   const timestamp =
@@ -61,7 +76,7 @@ app.post('/api/stkpush', generateToken, async (req, res) => {
 
   try {
     const response = await axios.post(
-      'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
+      `${MPESA_BASE_URL}/mpesa/stkpush/v1/processrequest`,
       {
         BusinessShortCode: BUSINESS_SHORT_CODE,
         Password: password,
